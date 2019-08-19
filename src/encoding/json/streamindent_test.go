@@ -33,4 +33,13 @@ func TestStreamIndent(t *testing.T) {
 			t.Errorf("Indent(%#q) = %#q, want %#q", tt.compact, s, tt.indent)
 		}
 	}
+
+	t.Run("malformed input", func(t *testing.T) {
+		buf.Reset()
+		w := IndentWriter(&buf, "", "\t")
+		_, err := io.Copy(w, strings.NewReader("bogus json"))
+		if err == nil {
+			t.Error("Expected error, got success")
+		}
+	})
 }
