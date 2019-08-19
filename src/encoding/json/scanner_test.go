@@ -6,9 +6,11 @@ package json
 
 import (
 	"bytes"
+	"io"
 	"math"
 	"math/rand"
 	"reflect"
+	"strings"
 	"testing"
 )
 
@@ -104,6 +106,7 @@ func TestCompactSeparators(t *testing.T) {
 
 func benchmarkIndent(in string, b *testing.B) {
 	b.ReportAllocs()
+	b.SetBytes(int64(len(in)))
 	var buf bytes.Buffer
 	for n := 0; n < b.N; n++ {
 		buf.Reset()
@@ -118,6 +121,32 @@ func BenchmarkIndentExample4(b *testing.B) { benchmarkIndent(examples[3].compact
 func BenchmarkIndentExample5(b *testing.B) { benchmarkIndent(examples[4].compact, b) }
 func BenchmarkIndentExample6(b *testing.B) { benchmarkIndent(examples[5].compact, b) }
 func BenchmarkIndentExample7(b *testing.B) { benchmarkIndent(examples[6].compact, b) }
+func BenchmarkIndentExample7b(b *testing.B) {
+	benchmarkIndent(strings.Repeat(examples[6].compact, 100), b)
+}
+
+func benchmarkIndentStream(in string, b *testing.B) {
+	b.ReportAllocs()
+	b.SetBytes(int64(len(in)))
+	var buf bytes.Buffer
+	r := &strings.Reader{}
+	for n := 0; n < b.N; n++ {
+		buf.Reset()
+		r.Reset(in)
+		_, _ = io.Copy(IndentWriter(&buf, "", "\t"), r)
+	}
+}
+
+func BenchmarkIndentStreamExample1(b *testing.B) { benchmarkIndentStream(examples[0].compact, b) }
+func BenchmarkIndentStreamExample2(b *testing.B) { benchmarkIndentStream(examples[1].compact, b) }
+func BenchmarkIndentStreamExample3(b *testing.B) { benchmarkIndentStream(examples[2].compact, b) }
+func BenchmarkIndentStreamExample4(b *testing.B) { benchmarkIndentStream(examples[3].compact, b) }
+func BenchmarkIndentStreamExample5(b *testing.B) { benchmarkIndentStream(examples[4].compact, b) }
+func BenchmarkIndentStreamExample6(b *testing.B) { benchmarkIndentStream(examples[5].compact, b) }
+func BenchmarkIndentStreamExample7(b *testing.B) { benchmarkIndentStream(examples[6].compact, b) }
+func BenchmarkIndentStreamExample7b(b *testing.B) {
+	benchmarkIndentStream(strings.Repeat(examples[6].compact, 100), b)
+}
 
 func TestIndent(t *testing.T) {
 	var buf bytes.Buffer

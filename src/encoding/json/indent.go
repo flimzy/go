@@ -4,7 +4,10 @@
 
 package json
 
-import "bytes"
+import (
+	"bytes"
+	"io"
+)
 
 // Compact appends to dst the JSON-encoded src with
 // insignificant space characters elided.
@@ -139,6 +142,17 @@ func Indent(dst *bytes.Buffer, src []byte, prefix, indent string) error {
 	if scan.eof() == scanError {
 		dst.Truncate(origLen)
 		return scan.err
+	}
+	return nil
+}
+
+// Indent is cool
+func oldIndent(dst *bytes.Buffer, src []byte, prefix, indent string) error {
+	origLen := dst.Len()
+	_, err := io.Copy(IndentWriter(dst, prefix, indent), bytes.NewReader(src))
+	if err != nil {
+		dst.Truncate(origLen)
+		return err
 	}
 	return nil
 }

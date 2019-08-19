@@ -16,7 +16,8 @@ func TestStreamIndent(t *testing.T) {
 	for _, tt := range examples {
 		buf.Reset()
 		w := IndentWriter(&buf, "", "\t")
-		if _, err := io.Copy(w, strings.NewReader(tt.indent)); err != nil {
+		_, err := io.Copy(w, strings.NewReader(tt.indent))
+		if err != nil {
 			t.Errorf("Indent(%#q): %v", tt.indent, err)
 		} else if s := buf.String(); s != tt.indent {
 			t.Errorf("Indent(%#q) = %#q, want original", tt.indent, s)
@@ -24,7 +25,8 @@ func TestStreamIndent(t *testing.T) {
 
 		buf.Reset()
 		w = IndentWriter(&buf, "", "\t")
-		if _, err := io.Copy(w, strings.NewReader(tt.compact)); err != nil {
+		_, err = io.Copy(w, strings.NewReader(tt.compact))
+		if err != nil {
 			t.Errorf("Indent(%#q): %v", tt.compact, err)
 			continue
 		} else if s := buf.String(); s != tt.indent {
