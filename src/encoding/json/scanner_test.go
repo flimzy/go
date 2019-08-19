@@ -102,6 +102,23 @@ func TestCompactSeparators(t *testing.T) {
 	}
 }
 
+func benchmarkIndent(in string, b *testing.B) {
+	b.ReportAllocs()
+	var buf bytes.Buffer
+	for n := 0; n < b.N; n++ {
+		buf.Reset()
+		_ = Indent(&buf, []byte(in), "", "\t")
+	}
+}
+
+func BenchmarkIndentExample1(b *testing.B) { benchmarkIndent(examples[0].compact, b) }
+func BenchmarkIndentExample2(b *testing.B) { benchmarkIndent(examples[1].compact, b) }
+func BenchmarkIndentExample3(b *testing.B) { benchmarkIndent(examples[2].compact, b) }
+func BenchmarkIndentExample4(b *testing.B) { benchmarkIndent(examples[3].compact, b) }
+func BenchmarkIndentExample5(b *testing.B) { benchmarkIndent(examples[4].compact, b) }
+func BenchmarkIndentExample6(b *testing.B) { benchmarkIndent(examples[5].compact, b) }
+func BenchmarkIndentExample7(b *testing.B) { benchmarkIndent(examples[6].compact, b) }
+
 func TestIndent(t *testing.T) {
 	var buf bytes.Buffer
 	for _, tt := range examples {
