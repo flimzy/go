@@ -148,6 +148,27 @@ func BenchmarkIndentStreamExample7b(b *testing.B) {
 	benchmarkIndentStream(strings.Repeat(examples[6].compact, 100), b)
 }
 
+func benchmarkMarshalAndIndentStream(i interface{}, b *testing.B) {
+	b.ReportAllocs()
+	var buf bytes.Buffer
+	for n := 0; n < b.N; n++ {
+		buf.Reset()
+		enc := NewEncoder(&buf)
+		enc.SetIndent("", "\t")
+		_ = enc.Encode(i)
+	}
+}
+
+func BenchmarkMarshalAndIndentStream_Int(b *testing.B) {
+	benchmarkMarshalAndIndentStream(int(123), b)
+}
+func BenchmarkMarshalAndIndentStream_Optionals(b *testing.B) {
+	benchmarkMarshalAndIndentStream(&Optionals{}, b)
+}
+func BenchmarkMarshalAndIndentStream_StringTag(b *testing.B) {
+	benchmarkMarshalAndIndentStream(&StringTag{}, b)
+}
+
 func TestIndent(t *testing.T) {
 	var buf bytes.Buffer
 	for _, tt := range examples {
