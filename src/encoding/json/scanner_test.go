@@ -154,6 +154,7 @@ func benchmarkMarshalAndIndentStream(i interface{}, b *testing.B) {
 	for n := 0; n < b.N; n++ {
 		buf.Reset()
 		enc := NewEncoder(&buf)
+		enc.SetDirectWrite()
 		enc.SetIndent("", "\t")
 		_ = enc.Encode(i)
 	}
@@ -301,6 +302,7 @@ func TestIndentErrors(t *testing.T) {
 }
 
 func diff(t *testing.T, a, b []byte) {
+	t.Helper()
 	for i := 0; ; i++ {
 		if i >= len(a) || i >= len(b) || a[i] != b[i] {
 			j := i - 10
