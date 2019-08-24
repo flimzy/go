@@ -175,9 +175,10 @@ func nonSpace(b []byte) bool {
 
 // An Encoder writes JSON values to an output stream.
 type Encoder struct {
-	w          io.Writer
-	err        error
-	escapeHTML bool
+	w           io.Writer
+	err         error
+	escapeHTML  bool
+	directWrite bool
 
 	indentBuf    *bytes.Buffer
 	indentPrefix string
@@ -210,9 +211,16 @@ func (enc *Encoder) Encode(v interface{}) error {
 	// is required if the encoded value was a number,
 	// so that the reader knows there aren't more
 	// digits coming.
-	e.WriteByte('\n')
+	err = e.WriteByte('\n')
+	if enc.directWrite {
+		encodeStatePool.Put(e)
+		return err
+	}
 
 	b := e.Bytes()
+	if iw, ok := enc.w.(*indentWriter); ok {
+		iw.scan.reset()
+	}
 	if enc.indentPrefix != "" || enc.indentValue != "" {
 		if enc.indentBuf == nil {
 			enc.indentBuf = new(bytes.Buffer)
@@ -231,12 +239,31 @@ func (enc *Encoder) Encode(v interface{}) error {
 	return err
 }
 
+// SetDirectWrite instructs the Encoder that it may write directly to the
+// underlying io.Writer, without first checking for errors. This can improve
+// performance in some cases, but has the potential to produce partial or
+// invalid JSON output in the case of errors.
+func (enc *Encoder) SetDirectWrite() {
+	enc.directWrite = true
+}
+
 // SetIndent instructs the encoder to format each subsequent encoded
 // value as if indented by the package-level function Indent(dst, src, prefix, indent).
 // Calling SetIndent("", "") disables indentation.
 func (enc *Encoder) SetIndent(prefix, indent string) {
-	enc.indentPrefix = prefix
-	enc.indentValue = indent
+	if !enc.directWrite {
+		enc.indentPrefix = prefix
+		enc.indentValue = indent
+		return
+	}
+	w := enc.w
+	if iw, ok := enc.w.(*indentWriter); ok {
+		w = iw.dst
+	}
+	if prefix != "" || indent != "" {
+		w = IndentWriter(w, prefix, indent)
+	}
+	enc.w = w
 }
 
 // SetEscapeHTML specifies whether problematic HTML characters
@@ -504,4 +531,22 @@ func (dec *Decoder) peek() (byte, error) {
 
 func (dec *Decoder) offset() int64 {
 	return dec.scanned + int64(dec.scanp)
+}
+
+type writer interface {
+	Write([]byte) (int, error)
+	WriteString(string) (int, error)
+	WriteByte(byte) error
+}
+
+type convertWriter struct {
+	io.Writer
+}
+
+func (c convertWriter) WriteString(s string) (int, error) {
+	return io.WriteString(c, s)
+}
+func (c convertWriter) WriteByte(b byte) error {
+	_, err := c.Write([]byte{b})
+	return err
 }
